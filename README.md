@@ -2,14 +2,6 @@
 
 🏔️ A complete web application for a mountain hot springs resort featuring campsites, cabins, and premium accommodations.
 
-## 🌟 Live Demo
-
-**Frontend:** [https://pineridgehotsprings.netlify.app](https://pineridgehotsprings.netlify.app)  
-**Admin Panel:** [https://pineridgehotsprings.netlify.app/admin](https://pineridgehotsprings.netlify.app/admin)
-
-### Demo Credentials
-- **Admin Login:** admin@pineridgehotsprings.com / admin123
-
 ## ✨ Features
 
 ### Guest Features
