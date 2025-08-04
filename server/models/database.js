@@ -2,7 +2,8 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs').promises;
 
-const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../database/reservations.db');
+// For Netlify Functions, use /tmp directory which is writable
+const DB_PATH = process.env.DATABASE_PATH || (process.env.NODE_ENV === 'production' ? '/tmp/reservations.db' : path.join(__dirname, '../database/reservations.db'));
 
 class Database {
   constructor() {
@@ -11,9 +12,17 @@ class Database {
 
   async initialize() {
     try {
+      console.log('Initializing database at:', DB_PATH);
+      console.log('Environment:', process.env.NODE_ENV);
+      
       // Ensure database directory exists
       const dbDir = path.dirname(DB_PATH);
-      await fs.mkdir(dbDir, { recursive: true });
+      try {
+        await fs.mkdir(dbDir, { recursive: true });
+        console.log('Database directory created/verified:', dbDir);
+      } catch (dirError) {
+        console.log('Directory creation error (may already exist):', dirError.message);
+      }
 
       // Create database connection
       this.db = new sqlite3.Database(DB_PATH, (err) => {
@@ -21,7 +30,7 @@ class Database {
           console.error('Error opening database:', err);
           throw err;
         }
-        console.log('Connected to SQLite database');
+        console.log('Connected to SQLite database at:', DB_PATH);
       });
 
       // Enable foreign keys
@@ -30,9 +39,19 @@ class Database {
       // Create tables
       await this.createTables();
       
+      // Check if database is empty and seed with initial data
+      const siteCount = await this.get('SELECT COUNT(*) as count FROM sites');
+      if (siteCount.count === 0) {
+        console.log('Database is empty, seeding with initial data...');
+        await this.seedInitialData();
+      }
+      
+      console.log('Database initialization completed successfully');
       return this.db;
     } catch (error) {
       console.error('Database initialization failed:', error);
+      console.error('Error details:', error.message);
+      console.error('Stack trace:', error.stack);
       throw error;
     }
   }
@@ -161,6 +180,106 @@ class Database {
         resolve();
       }
     });
+  }
+
+  async seedInitialData() {
+    const sites = [
+      // Campsites (4)
+      {
+        id: 'campsite-1',
+        name: 'Riverside Retreat',
+        type: 'campsite',
+        capacity: 4,
+        price: 45.00,
+        amenities: JSON.stringify(['Fire pit', 'Picnic table', 'Water access', 'Hot springs access', 'Restroom nearby', 'Trash pickup']),
+        description: 'A peaceful campsite nestled along the mountain stream with easy access to natural hot springs.',
+        images: JSON.stringify(['https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?ixlib=rb-4.0.3']),
+        features: JSON.stringify(['Stream-side location', 'Shaded area', '24/7 hot springs access', 'Wildlife viewing']),
+        size: '20x30 ft'
+      },
+      {
+        id: 'campsite-2',
+        name: 'Mountain View Base',
+        type: 'campsite',
+        capacity: 6,
+        price: 50.00,
+        amenities: JSON.stringify(['Fire pit', 'Picnic table', 'Electric hookup', 'Hot springs access', 'Bear box', 'Level tent pad']),
+        description: 'Spacious campsite with stunning mountain vistas and convenient electric hookup.',
+        images: JSON.stringify(['https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?ixlib=rb-4.0.3']),
+        features: JSON.stringify(['Panoramic mountain views', 'Electric hookup', 'Large flat area', 'Easy vehicle access']),
+        size: '25x35 ft'
+      },
+      // Cabins (4)
+      {
+        id: 'cabin-1',
+        name: 'Cozy Pine Cabin',
+        type: 'cabin',
+        capacity: 4,
+        price: 120.00,
+        amenities: JSON.stringify(['Full kitchen', 'Private bathroom', 'Fireplace', 'Hot springs access', 'WiFi', 'Heating']),
+        description: 'Charming one-bedroom cabin with rustic charm and modern amenities.',
+        images: JSON.stringify(['/cabin_pics/cabin-01.jpg']),
+        features: JSON.stringify(['Wood-burning fireplace', 'Full kitchen', 'Private deck', 'Mountain views']),
+        size: '600 sq ft',
+        bedrooms: 1,
+        bathrooms: 1
+      },
+      {
+        id: 'cabin-2',
+        name: 'Family Lodge',
+        type: 'cabin',
+        capacity: 8,
+        price: 180.00,
+        amenities: JSON.stringify(['Full kitchen', 'Two bathrooms', 'Living room', 'Hot springs access', 'WiFi', 'Heating']),
+        description: 'Spacious three-bedroom family lodge perfect for group retreats.',
+        images: JSON.stringify(['/cabin_pics/cabin-04.jpg']),
+        features: JSON.stringify(['Large living area', 'Game room', 'Full laundry', 'Private BBQ area']),
+        size: '1200 sq ft',
+        bedrooms: 3,
+        bathrooms: 2
+      },
+      // Premium Sites (2)
+      {
+        id: 'premium-1',
+        name: 'Luxury Glamping Tent',
+        type: 'premium',
+        capacity: 4,
+        price: 200.00,
+        amenities: JSON.stringify(['King bed', 'Private bathroom', 'Mini fridge', 'Hot springs access', 'WiFi', 'Heating']),
+        description: 'Luxurious safari-style tent with hotel-quality amenities and stunning mountain views.',
+        images: JSON.stringify(['/cabin_pics/cabin-10.jpg']),
+        features: JSON.stringify(['Safari-style tent', 'Hotel amenities', 'Premium location', 'Concierge service']),
+        size: '400 sq ft',
+        bedrooms: 1,
+        bathrooms: 1
+      }
+    ];
+
+    const insertSite = `
+      INSERT INTO sites (
+        id, name, type, capacity, price, amenities, description, 
+        images, features, size, bedrooms, bathrooms
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    
+    for (const site of sites) {
+      await this.run(insertSite, [
+        site.id,
+        site.name,
+        site.type,
+        site.capacity,
+        site.price,
+        site.amenities,
+        site.description,
+        site.images,
+        site.features,
+        site.size || null,
+        site.bedrooms || null,
+        site.bathrooms || null
+      ]);
+    }
+    
+    console.log(`Successfully seeded ${sites.length} sites`);
   }
 }
 
