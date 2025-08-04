@@ -95,11 +95,11 @@ DATABASE_PATH=./database/reservations.db
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
+SMTP_PASS=[YOUR_APP_PASSWORD]
 
 # Admin
 ADMIN_EMAIL=admin@pineridgehotsprings.com
-ADMIN_PASSWORD=secure_admin_password
+ADMIN_PASSWORD=[YOUR_SECURE_ADMIN_PASSWORD]
 ```
 
 ## 📁 Project Structure

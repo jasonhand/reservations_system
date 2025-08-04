@@ -30,8 +30,11 @@ const authenticate = (req, res, next) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   
-  // Simple demo authentication
-  if (email === 'admin@pineridgehotsprings.com' && password === 'admin123') {
+  // Simple demo authentication - use environment variable for production
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@pineridgehotsprings.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  
+  if (email === adminEmail && password === adminPassword) {
     res.json({
       success: true,
       data: {

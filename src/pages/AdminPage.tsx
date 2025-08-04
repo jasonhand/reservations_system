@@ -238,7 +238,7 @@ export default function AdminPage() {
             <div className="mt-6 text-center text-sm text-neutral-600">
               Demo credentials:<br />
               Email: admin@pineridgehotsprings.com<br />
-              Password: admin123
+              Password: [Check documentation for demo password]
             </div>
           </div>
         </div>

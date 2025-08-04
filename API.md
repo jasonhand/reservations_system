@@ -276,7 +276,7 @@ POST /api/admin/login
 ```json
 {
   "email": "admin@pineridgehotsprings.com",
-  "password": "admin123"
+  "password": "[DEMO_PASSWORD]"
 }
 ```
 

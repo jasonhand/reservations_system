@@ -76,11 +76,11 @@ DATABASE_PATH=/tmp/reservations.db
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
+SMTP_PASS=[YOUR_APP_PASSWORD]
 
 # Admin Configuration
 ADMIN_EMAIL=admin@pineridgehotsprings.com
-ADMIN_PASSWORD=your-secure-admin-password
+ADMIN_PASSWORD=[YOUR_SECURE_ADMIN_PASSWORD]
 ```
 
 ### 4. Configure Domain (Optional)
