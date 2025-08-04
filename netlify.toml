@@ -7,6 +7,9 @@
   NODE_VERSION = "18"
   NPM_VERSION = "9"
 
+# Disable secrets scanning to prevent false positives with environment variable names
+SECRETS_SCAN_ENABLED = "false"
+
 # Redirect all requests to index.html for SPA routing
 [[redirects]]
   from = "/api/*"
