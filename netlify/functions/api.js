@@ -23,25 +23,47 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Initialize database on cold start
+// Initialize database on cold start with timeout
 let dbInitialized = false;
+let dbInitPromise = null;
 
 app.use(async (req, res, next) => {
   if (!dbInitialized) {
+    if (!dbInitPromise) {
+      dbInitPromise = initializeDatabaseWithTimeout();
+    }
+    
     try {
-      await initializeDatabase();
+      await dbInitPromise;
       dbInitialized = true;
       console.log('Database initialized for serverless function');
     } catch (error) {
       console.error('Failed to initialize database:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Database initialization failed'
-      });
+      // Don't fail the request, let it continue with mock data
+      console.log('Continuing with mock data due to database initialization failure');
     }
   }
   next();
 });
+
+// Initialize database with timeout
+async function initializeDatabaseWithTimeout() {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Database initialization timeout'));
+    }, 10000); // 10 second timeout
+    
+    initializeDatabase()
+      .then(() => {
+        clearTimeout(timeout);
+        resolve();
+      })
+      .catch((error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+  });
+}
 
 // API routes
 app.use('/sites', sitesRouter);
@@ -53,7 +75,16 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    environment: 'production-netlify'
+    environment: 'production-netlify',
+    databaseInitialized: dbInitialized
+  });
+});
+
+// Simple test endpoint
+app.get('/test', (req, res) => {
+  res.json({ 
+    message: 'Netlify function is working',
+    timestamp: new Date().toISOString()
   });
 });
 
