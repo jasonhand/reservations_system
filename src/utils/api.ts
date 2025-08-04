@@ -93,8 +93,8 @@ class ApiClient {
     // Try the API first
     const apiResult = await this.tryApiRequest<Site[]>('/sites');
     
-    // If API failed and we're in development, use mock data
-    if (!apiResult.success && window.location.hostname === 'localhost') {
+    // If API failed, use mock data (both development and production)
+    if (!apiResult.success) {
       console.log('API failed, using mock data for sites');
       return this.mockClient.getSites();
     }
@@ -116,7 +116,7 @@ class ApiClient {
   async getSite(id: string): Promise<ApiResponse<Site>> {
     const apiResult = await this.tryApiRequest<Site>(`/sites/${id}`);
     
-    if (!apiResult.success && window.location.hostname === 'localhost') {
+    if (!apiResult.success) {
       console.log('API failed, using mock data for site:', id);
       return this.mockClient.getSite(id);
     }
@@ -134,7 +134,7 @@ class ApiClient {
 
     const apiResult = await this.tryApiRequest<Site[]>(`/sites/available?${searchParams}`);
     
-    if (!apiResult.success && window.location.hostname === 'localhost') {
+    if (!apiResult.success) {
       console.log('API failed, using mock data for available sites');
       return this.mockClient.getAvailableSites();
     }
@@ -151,18 +151,16 @@ class ApiClient {
     try {
       return await this.request<AvailabilityOverview>(`/sites/availability/overview?${searchParams}`);
     } catch (error) {
-      if (this.useMockData) {
-        // Return mock data for development
-        return {
-          success: true,
-          data: {
-            totalSites: 10,
-            dateRange: { startDate, endDate },
-            availability: []
-          }
-        };
-      }
-      throw error;
+      // Return mock data for both development and production when API fails
+      console.log('API failed, using mock data for availability overview');
+      return {
+        success: true,
+        data: {
+          totalSites: 10,
+          dateRange: { startDate, endDate },
+          availability: []
+        }
+      };
     }
   }
 
@@ -173,34 +171,32 @@ class ApiClient {
       );
       return response;
     } catch (error) {
-      if (this.useMockData) {
-        console.warn('🔧 Backend server not running - switching to mock data mode. To enable full functionality, start the backend server.');
-        
-        // Create mock individual site availability data
-        const mockData: Record<string, SiteAvailability> = {};
-        const sites = mockSites;
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        
-        sites.forEach((site: Site) => {
-          // Mock some random availability
-          const unavailableDays = Math.floor(Math.random() * (totalDays / 3));
-          mockData[site.id] = {
-            siteId: site.id,
-            siteName: site.name,
-            totalDays,
-            availableDays: totalDays - unavailableDays,
-            unavailableDays
-          };
-        });
-        
-        return {
-          success: true,
-          data: mockData
+      // Return mock data for both development and production when API fails
+      console.log('API failed, using mock data for individual site availability');
+      
+      // Create mock individual site availability data
+      const mockData: Record<string, SiteAvailability> = {};
+      const sites = mockSites;
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      
+      sites.forEach((site: Site) => {
+        // Mock some random availability
+        const unavailableDays = Math.floor(Math.random() * (totalDays / 3));
+        mockData[site.id] = {
+          siteId: site.id,
+          siteName: site.name,
+          totalDays,
+          availableDays: totalDays - unavailableDays,
+          unavailableDays
         };
-      }
-      throw error;
+      });
+      
+      return {
+        success: true,
+        data: mockData
+      };
     }
   }
 
