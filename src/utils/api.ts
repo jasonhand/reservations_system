@@ -1,5 +1,5 @@
-import { Site, Reservation, BookingFormData, AvailabilityQuery, ApiResponse, SiteCalendarData, SiteDayAvailability } from '../types';
-import { MockApiClient } from './mockData';
+import { Site, Reservation, BookingFormData, AvailabilityQuery, ApiResponse, SiteCalendarData, SiteDayAvailability, AvailabilityOverview, SiteAvailability } from '../types';
+import { MockApiClient, mockSites } from './mockData';
 
 // Determine API base URL based on environment
 const getApiBaseUrl = () => {
@@ -183,7 +183,7 @@ class ApiClient {
         const end = new Date(endDate);
         const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
         
-        sites.forEach(site => {
+        sites.forEach((site: Site) => {
           // Mock some random availability
           const unavailableDays = Math.floor(Math.random() * (totalDays / 3));
           mockData[site.id] = {
